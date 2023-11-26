@@ -69,18 +69,67 @@ const deleteFile = async (path: string) => {
     resolve(undefined);
   });
 }
+const downloadFile = async (url: string, outputPath: string): Promise<void> => {
+  console.log(`Downloading file from ${url}...`);
+
+  const writer = createWriteStream(outputPath);
+
+  return axios({
+    method: 'get',
+    url: url,
+    responseType: 'stream',
+  }).then(response => {
+    return new Promise((resolve, reject) => {
+      response.data.pipe(writer);
+      let error: any = null;
+      writer.on('error', err => {
+        error = err;
+        writer.close();
+        reject(err);
+      });
+      writer.on('close', () => {
+        if (!error) {
+          console.log(`Downloaded file to ${outputPath}`);
+          resolve();
+        }
+      });
+    });
+  });
+};
 
 export const backup = async () => {
-  console.log("Initiating DB backup...");
+  console.log("Initiating backup...");
 
   let date = new Date().toISOString();
   const timestamp = date.replace(/[:.]+/g, '-');
-  const filename = `backup-${timestamp}.tar.gz`;
-  const filepath = path.join(os.tmpdir(), filename);
+  
+  // Backup database
+  const dbFilename = `backup-db-${timestamp}.tar.gz`;
+  const dbFilepath = path.join(os.tmpdir(), dbFilename);
+  await dumpToFile(dbFilepath);
+  await uploadToS3({ name: dbFilename, path: dbFilepath });
+  await deleteFile(dbFilepath);
 
-  await dumpToFile(filepath);
-  await uploadToS3({ name: filename, path: filepath });
-  await deleteFile(filepath);
+  // Download and backup zip file from URL
+  const zipFilename = `backup-${timestamp}.zip`;
+  const zipFilepath = path.join(os.tmpdir(), zipFilename);
+  await downloadFile(env.DOWNLOAD_ZIP_URL, zipFilepath);
+  await uploadToS3({ name: zipFilename, path: zipFilepath });
+  await deleteFile(zipFilepath);
 
-  console.log("DB backup complete...");
+  console.log("Backup complete...");
 }
+// export const backup = async () => {
+//   console.log("Initiating DB backup...");
+
+//   let date = new Date().toISOString();
+//   const timestamp = date.replace(/[:.]+/g, '-');
+//   const filename = `backup-${timestamp}.tar.gz`;
+//   const filepath = path.join(os.tmpdir(), filename);
+
+//   await dumpToFile(filepath);
+//   await uploadToS3({ name: filename, path: filepath });
+//   await deleteFile(filepath);
+
+//   console.log("DB backup complete...");
+// }
