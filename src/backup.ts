@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { PutObjectCommand, S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
-import { createWriteStream, unlink, statSync } from "fs";
+import { createWriteStream, createReadStream, unlink, statSync } from "fs";
 import { filesize } from "filesize";
 import path from "path";
 import os from "os";
