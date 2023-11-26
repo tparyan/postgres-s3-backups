@@ -113,7 +113,7 @@ export const backup = async () => {
   // Download and backup zip file from URL
   const zipFilename = `backup-${timestamp}.zip`;
   const zipFilepath = path.join(os.tmpdir(), zipFilename);
-  await downloadFile(env.DOWNLOAD_ZIP_URL, zipFilepath);
+  await downloadFile(env.BACKUP_VOLUME_URL, zipFilepath);
   await uploadToS3({ name: zipFilename, path: zipFilepath });
   await deleteFile(zipFilepath);
 
