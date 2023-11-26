@@ -1,11 +1,13 @@
 import { exec } from "child_process";
 import { PutObjectCommand, S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
-import { createReadStream, unlink, statSync } from "fs";
+import { createWriteStream, unlink, statSync } from "fs";
 import { filesize } from "filesize";
 import path from "path";
 import os from "os";
+import axios from "axios";
 
 import { env } from "./env";
+
 
 const uploadToS3 = async ({ name, path }: { name: string, path: string }) => {
   console.log("Uploading backup to S3...");
